@@ -74,6 +74,9 @@
   .note-check-box{width:20px;height:20px;border:1.5px solid var(--paper-ruled);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
   .note-check-row.checked .note-check-box{background:var(--accent);border-color:var(--accent);color:white;}
   .note-check-label{font-size:13px;color:var(--ink-light);}
+  .alarm-textarea{width:100%;border:1px solid var(--paper-ruled);border-radius:6px;padding:10px 12px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);outline:none;resize:vertical;min-height:80px;margin-top:10px;line-height:1.7;}
+  .alarm-textarea:focus{border-color:var(--accent);}
+  .alarm-textarea-label{font-size:10px;letter-spacing:2px;color:var(--ink-faint);margin-top:12px;display:block;}
   /* 月次ビュー */
   .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
   .nav-arrow{background:none;border:1px solid var(--paper-ruled);border-radius:6px;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--ink-light);}
@@ -564,6 +567,17 @@ async function toggleAlarmNote(id) {
   renderToday();
 }
 
+async function saveAlarmMemo(id) {
+  const memo = document.getElementById('memo-'+id).value;
+  const data = await getTodayData();
+  if (!data.alarms[id]) data.alarms[id] = {};
+  data.alarms[id].memo = memo;
+  todayCache = data;
+  await saveDayData(dateKey(), data);
+  setSyncIndicator('✓ 保存しました');
+  setTimeout(()=>setSyncIndicator(''), 2000);
+}
+
 async function renderToday() {
   const data = await getTodayData();
   // 起床
@@ -619,6 +633,7 @@ async function renderToday() {
   ALARMS.forEach(a => {
     const d2 = data.alarms[a.id]||{};
     const noted = d2.noted;
+    const memo = d2.memo || '';
     const card = document.createElement('div');
     card.className = 'alarm-card';
     card.innerHTML = `
@@ -631,9 +646,16 @@ async function renderToday() {
       </div>
       <div class="alarm-body" id="ta-${a.id}">
         <div class="alarm-question-full">「${a.q}」</div>
-        <div class="note-check-row ${noted?'checked':''}" onclick="toggleAlarmNote('${a.id}');event.stopPropagation()">
-          <div class="note-check-box">${noted?'✓':''}</div>
-          <div class="note-check-label">ノートに記入した</div>
+        <span class="alarm-textarea-label">ここに直接書く</span>
+        <textarea class="alarm-textarea" id="memo-${a.id}" placeholder="気づいたことを書く...">${memo}</textarea>
+        <div style="text-align:right;margin-top:6px">
+          <button onclick="saveAlarmMemo('${a.id}');event.stopPropagation()" style="background:var(--accent);color:white;border:none;border-radius:6px;padding:7px 16px;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;">保存</button>
+        </div>
+        <div style="margin-top:12px;border-top:1px solid var(--paper-ruled);padding-top:12px;">
+          <div class="note-check-row ${noted?'checked':''}" onclick="toggleAlarmNote('${a.id}');event.stopPropagation()">
+            <div class="note-check-box">${noted?'✓':''}</div>
+            <div class="note-check-label">紙のノートにも記入した</div>
+          </div>
         </div>
       </div>`;
     al.appendChild(card);
@@ -786,9 +808,12 @@ async function renderDailyContent() {
   html += `</div></div><div class="summary-block"><h3>問いかけの記録</h3>`;
   ALARMS.forEach(a=>{
     const d2=(data.alarms||{})[a.id]||{};
-    html+=`<div class="summary-row">
-      <span class="summary-row-label">${a.time}　<span style="font-size:11px">${a.q.substring(0,16)}…</span></span>
-      <span class="pill ${d2.noted?'noted':'skipped'}">${d2.noted?'記入済':'未記入'}</span>
+    html+=`<div style="padding:10px 0;border-bottom:1px solid var(--paper-ruled);">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:${d2.memo?'8px':'0'}">
+        <span style="font-size:13px;color:var(--ink-light)">${a.time}　${a.q}</span>
+        <span class="pill ${d2.noted?'noted':'skipped'}" style="flex-shrink:0;margin-left:8px">${d2.noted?'ノート記入済':'未記入'}</span>
+      </div>
+      ${d2.memo ? `<div style="font-size:13px;color:var(--ink);background:var(--paper-warm);padding:8px 12px;border-radius:6px;line-height:1.7;white-space:pre-wrap">${d2.memo}</div>` : ''}
     </div>`;
   });
   html+=`</div>`;
