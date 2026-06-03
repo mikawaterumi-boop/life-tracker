@@ -1,0 +1,878 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>一日の軌跡</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500&display=swap');
+  :root {
+    --ink:#1a1a18;--ink-light:#4a4a44;--ink-faint:#9a9a90;
+    --paper:#f7f5f0;--paper-warm:#ede9e0;--paper-ruled:#e8e2d8;
+    --accent:#5a7a5a;--accent-light:#8aaa8a;--accent-pale:#d8e8d8;
+    --warn:#c05030;--warn-pale:#f0e0d8;--gold:#b89040;--gold-pale:#f0e8d0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);min-height:100vh;padding:0 0 80px;}
+  .header{background:var(--ink);color:var(--paper);text-align:center;padding:28px 20px 22px;border-bottom:3px solid var(--gold);}
+  .header h1{font-family:'Noto Serif JP',serif;font-size:22px;font-weight:300;letter-spacing:6px;margin-bottom:4px;}
+  .header .date{font-size:12px;color:var(--accent-light);letter-spacing:3px;}
+  .nav-tabs{display:flex;background:var(--ink);border-bottom:1px solid rgba(255,255,255,0.1);}
+  .nav-tab{flex:1;padding:10px 0;text-align:center;font-size:11px;letter-spacing:1px;color:rgba(255,255,255,0.5);cursor:pointer;border:none;background:none;font-family:'Noto Sans JP',sans-serif;border-bottom:2px solid transparent;}
+  .nav-tab.active{color:var(--gold);border-bottom:2px solid var(--gold);}
+  .page{display:none;padding:20px 16px;max-width:640px;margin:0 auto;}
+  .page.active{display:block;}
+  .section-label{font-size:10px;letter-spacing:3px;color:var(--ink-faint);margin:24px 0 10px;}
+  .section-label:first-child{margin-top:8px;}
+  .time-card{background:white;border:1px solid var(--paper-ruled);border-radius:8px;padding:18px 20px;display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+  .time-card-left{display:flex;align-items:center;gap:14px;}
+  .time-icon{width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:18px;}
+  .time-icon.morning{background:var(--gold-pale);}
+  .time-icon.night{background:#e8e0f0;}
+  .time-label{font-size:13px;color:var(--ink-light);letter-spacing:1px;}
+  .time-value{font-family:'Noto Serif JP',serif;font-size:22px;color:var(--ink);margin-top:2px;}
+  .time-value.empty{font-size:13px;color:var(--ink-faint);font-family:'Noto Sans JP',sans-serif;}
+  .stamp-btn{background:var(--ink);color:var(--paper);border:none;border-radius:6px;padding:10px 18px;font-family:'Noto Sans JP',sans-serif;font-size:12px;letter-spacing:1px;cursor:pointer;}
+  .stamp-btn:hover{opacity:0.8;}
+  .stamp-btn.stamped{background:var(--paper-warm);color:var(--ink-faint);border:1px solid var(--paper-ruled);}
+  .time-btn-group{display:flex;flex-direction:column;gap:6px;align-items:flex-end;}
+  .manual-btn{background:none;color:var(--accent);border:1px solid var(--accent);border-radius:6px;padding:7px 12px;font-family:'Noto Sans JP',sans-serif;font-size:11px;letter-spacing:1px;cursor:pointer;}
+  .manual-btn:hover{background:var(--accent-pale);}
+  .time-input-row{display:none;align-items:center;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid var(--paper-ruled);}
+  .time-input-row.show{display:flex;flex-wrap:wrap;}
+  .time-input{border:1px solid var(--paper-ruled);border-radius:6px;padding:8px 12px;font-size:15px;font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);outline:none;width:110px;}
+  .time-input:focus{border-color:var(--accent);}
+  .time-input-confirm{background:var(--accent);color:white;border:none;border-radius:6px;padding:8px 14px;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;}
+  .time-input-cancel{background:none;color:var(--ink-faint);border:1px solid var(--paper-ruled);border-radius:6px;padding:8px 12px;font-family:'Noto Sans JP',sans-serif;font-size:12px;cursor:pointer;}
+  .add-routine-row{display:flex;align-items:center;gap:8px;padding:12px 18px;border-top:1px solid var(--paper-ruled);}
+  .add-routine-input{flex:1;border:1px solid var(--paper-ruled);border-radius:6px;padding:8px 12px;font-size:13px;font-family:'Noto Sans JP',sans-serif;background:var(--paper);color:var(--ink);outline:none;}
+  .add-routine-input:focus{border-color:var(--accent);}
+  .add-routine-btn{background:var(--accent);color:white;border:none;border-radius:6px;padding:8px 14px;font-size:13px;font-family:'Noto Sans JP',sans-serif;cursor:pointer;white-space:nowrap;}
+  .check-item .delete-btn{margin-left:auto;background:none;border:none;color:var(--ink-faint);font-size:16px;cursor:pointer;padding:0 4px;line-height:1;}
+  .checklist{background:white;border:1px solid var(--paper-ruled);border-radius:8px;overflow:hidden;}
+  .check-item{display:flex;align-items:center;gap:14px;padding:13px 18px;border-bottom:1px solid var(--paper-ruled);cursor:pointer;-webkit-user-select:none;user-select:none;}
+  .check-item:last-child{border-bottom:none;}
+  .check-item:hover{background:var(--paper);}
+  .check-item.checked{background:var(--accent-pale);}
+  .check-box{width:20px;height:20px;border:1.5px solid var(--paper-ruled);border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;}
+  .check-item.checked .check-box{background:var(--accent);border-color:var(--accent);color:white;}
+  .check-text{font-size:14px;letter-spacing:0.5px;}
+  .check-item.checked .check-text{color:var(--accent);}
+  .alarm-card{background:white;border:1px solid var(--paper-ruled);border-radius:8px;margin-bottom:10px;overflow:hidden;}
+  .alarm-header{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;cursor:pointer;}
+  .alarm-header:hover{background:var(--paper);}
+  .alarm-left{display:flex;align-items:center;gap:12px;}
+  .alarm-time{font-family:'Noto Serif JP',serif;font-size:20px;color:var(--ink);min-width:52px;}
+  .alarm-question{font-size:12px;color:var(--ink-faint);line-height:1.4;}
+  .alarm-badge{font-size:10px;padding:3px 10px;border-radius:12px;letter-spacing:1px;}
+  .alarm-badge.pending{background:var(--paper-warm);color:var(--ink-faint);}
+  .alarm-badge.noted{background:var(--accent-pale);color:var(--accent);}
+  .alarm-body{display:none;padding:0 18px 16px;border-top:1px solid var(--paper-ruled);}
+  .alarm-body.open{display:block;}
+  .alarm-question-full{font-size:14px;color:var(--ink-light);margin:12px 0 10px;line-height:1.6;font-style:italic;}
+  .note-check-row{display:flex;align-items:center;gap:10px;cursor:pointer;-webkit-user-select:none;user-select:none;}
+  .note-check-box{width:20px;height:20px;border:1.5px solid var(--paper-ruled);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:11px;flex-shrink:0;}
+  .note-check-row.checked .note-check-box{background:var(--accent);border-color:var(--accent);color:white;}
+  .note-check-label{font-size:13px;color:var(--ink-light);}
+  /* 月次ビュー */
+  .month-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .nav-arrow{background:none;border:1px solid var(--paper-ruled);border-radius:6px;width:36px;height:36px;font-size:16px;cursor:pointer;color:var(--ink-light);}
+  .month-label{font-family:'Noto Serif JP',serif;font-size:15px;letter-spacing:2px;}
+  .month-section{background:white;border:1px solid var(--paper-ruled);border-radius:8px;margin-bottom:16px;overflow:hidden;}
+  .month-section-header{padding:12px 18px;background:var(--paper-warm);border-bottom:1px solid var(--paper-ruled);font-size:11px;letter-spacing:3px;color:var(--ink-faint);}
+  .month-table{width:100%;border-collapse:collapse;font-size:12px;}
+  .month-table th{padding:8px 10px;text-align:center;color:var(--ink-faint);font-weight:400;border-bottom:1px solid var(--paper-ruled);font-size:10px;letter-spacing:1px;}
+  .month-table td{padding:8px 10px;text-align:center;border-bottom:1px solid var(--paper-ruled);color:var(--ink-light);}
+  .month-table tr:last-child td{border-bottom:none;}
+  .month-table td:first-child{text-align:left;font-weight:500;color:var(--ink);white-space:nowrap;}
+  .dot-done{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--accent);}
+  .dot-skip{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--paper-ruled);}
+  /* 日次一覧 */
+  .summary-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+  .summary-date-label{font-family:'Noto Serif JP',serif;font-size:15px;letter-spacing:2px;}
+  .summary-block{background:white;border:1px solid var(--paper-ruled);border-radius:8px;padding:16px 18px;margin-bottom:12px;}
+  .summary-block h3{font-size:10px;letter-spacing:3px;color:var(--ink-faint);margin-bottom:10px;}
+  .summary-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--paper-ruled);font-size:13px;}
+  .summary-row:last-child{border-bottom:none;}
+  .summary-row-label{color:var(--ink-light);}
+  .summary-row-val{font-weight:500;color:var(--ink);}
+  .pill{display:inline-block;padding:2px 10px;border-radius:10px;font-size:11px;margin:2px 3px;}
+  .pill.done{background:var(--accent-pale);color:var(--accent);}
+  .pill.skip{background:var(--paper-warm);color:var(--ink-faint);}
+  .pill.noted{background:var(--gold-pale);color:var(--gold);}
+  .pill.skipped{background:var(--paper-warm);color:var(--ink-faint);}
+  /* アラームポップアップ */
+  .alarm-overlay{display:none;position:fixed;inset:0;background:rgba(26,26,24,0.7);z-index:999;align-items:center;justify-content:center;padding:20px;}
+  .alarm-overlay.show{display:flex;}
+  .alarm-popup{background:var(--paper);border:1px solid var(--paper-ruled);border-radius:12px;max-width:380px;width:100%;padding:30px 28px 24px;text-align:center;}
+  .popup-time{font-family:'Noto Serif JP',serif;font-size:36px;color:var(--gold);margin-bottom:8px;}
+  .popup-label{font-size:11px;letter-spacing:3px;color:var(--ink-faint);margin-bottom:20px;}
+  .popup-question{font-size:16px;line-height:1.8;color:var(--ink);font-style:italic;margin-bottom:24px;padding:16px;background:var(--paper-warm);border-radius:8px;}
+  .popup-btn{background:var(--ink);color:var(--paper);border:none;border-radius:8px;padding:12px 32px;font-family:'Noto Sans JP',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;width:100%;}
+  /* ログイン */
+  .login-wrap{max-width:360px;margin:60px auto;padding:0 20px;}
+  .login-card{background:white;border:1px solid var(--paper-ruled);border-radius:12px;padding:32px 28px;}
+  .login-title{font-family:'Noto Serif JP',serif;font-size:18px;letter-spacing:4px;text-align:center;margin-bottom:24px;color:var(--ink);}
+  .login-subtitle{font-size:12px;color:var(--ink-faint);text-align:center;margin-bottom:24px;letter-spacing:1px;}
+  .form-group{margin-bottom:16px;}
+  .form-label{font-size:11px;letter-spacing:2px;color:var(--ink-faint);margin-bottom:6px;display:block;}
+  .form-input{width:100%;padding:10px 14px;border:1px solid var(--paper-ruled);border-radius:6px;font-family:'Noto Sans JP',sans-serif;font-size:14px;background:var(--paper);color:var(--ink);outline:none;}
+  .form-input:focus{border-color:var(--accent);}
+  .btn-primary{width:100%;background:var(--ink);color:var(--paper);border:none;border-radius:8px;padding:12px;font-family:'Noto Sans JP',sans-serif;font-size:13px;letter-spacing:2px;cursor:pointer;margin-bottom:10px;}
+  .btn-secondary{width:100%;background:none;color:var(--accent);border:1px solid var(--accent);border-radius:8px;padding:11px;font-family:'Noto Sans JP',sans-serif;font-size:13px;letter-spacing:1px;cursor:pointer;}
+  .login-error{font-size:12px;color:var(--warn);text-align:center;margin-top:12px;min-height:18px;}
+  .login-toggle{font-size:12px;color:var(--ink-faint);text-align:center;margin-top:16px;cursor:pointer;}
+  .login-toggle span{color:var(--accent);text-decoration:underline;}
+  .user-bar{display:flex;align-items:center;justify-content:space-between;padding:8px 16px;background:rgba(255,255,255,0.05);font-size:11px;color:rgba(255,255,255,0.5);max-width:640px;margin:0 auto;}
+  .logout-btn{background:none;border:none;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;font-family:'Noto Sans JP',sans-serif;}
+  .sync-indicator{font-size:10px;color:var(--accent-light);letter-spacing:1px;}
+  /* 進捗バー */
+  .progress-bar-wrap{background:var(--paper-warm);border-radius:4px;height:6px;margin-top:12px;overflow:hidden;}
+  .progress-bar-fill{height:100%;background:var(--accent);border-radius:4px;transition:width 0.4s;}
+  .progress-label{font-size:11px;color:var(--ink-faint);text-align:right;margin-top:5px;letter-spacing:1px;}
+  /* 設定 */
+  .alarm-setting-row{display:flex;align-items:center;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--paper-ruled);font-size:13px;}
+  .alarm-setting-row:last-child{border-bottom:none;}
+  .toggle-switch{position:relative;width:40px;height:22px;}
+  .toggle-switch input{display:none;}
+  .toggle-slider{position:absolute;inset:0;background:var(--paper-ruled);border-radius:11px;cursor:pointer;}
+  .toggle-slider:before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:white;border-radius:50%;transition:transform 0.2s;}
+  .toggle-switch input:checked + .toggle-slider{background:var(--accent);}
+  .toggle-switch input:checked + .toggle-slider:before{transform:translateX(18px);}
+  /* タブ切替（月次） */
+  .view-tabs{display:flex;border:1px solid var(--paper-ruled);border-radius:8px;overflow:hidden;margin-bottom:16px;}
+  .view-tab{flex:1;padding:9px 0;text-align:center;font-size:12px;letter-spacing:1px;cursor:pointer;border:none;background:none;font-family:'Noto Sans JP',sans-serif;color:var(--ink-faint);}
+  .view-tab.active{background:var(--ink);color:var(--paper);}
+</style>
+</head>
+<body>
+
+<!-- ログイン画面 -->
+<div id="login-screen">
+  <div style="background:var(--ink);text-align:center;padding:28px 20px 22px;border-bottom:3px solid var(--gold);">
+    <h1 style="font-family:'Noto Serif JP',serif;font-size:22px;font-weight:300;letter-spacing:6px;color:var(--paper);">一 日 の 軌 跡</h1>
+  </div>
+  <div class="login-wrap">
+    <div class="login-card">
+      <div class="login-title">ログイン</div>
+      <div class="login-subtitle" id="login-subtitle">アカウントでサインイン</div>
+      <div class="form-group">
+        <label class="form-label">メールアドレス</label>
+        <input class="form-input" type="email" id="login-email" placeholder="example@email.com">
+      </div>
+      <div class="form-group">
+        <label class="form-label">パスワード</label>
+        <input class="form-input" type="password" id="login-pass" placeholder="6文字以上">
+      </div>
+      <button class="btn-primary" onclick="doLogin()" id="login-btn">ログイン</button>
+      <button class="btn-secondary" onclick="doRegister()" id="register-btn" style="display:none">アカウントを作成</button>
+      <div class="login-error" id="login-error"></div>
+      <div class="login-toggle" id="login-toggle" onclick="toggleLoginMode()">
+        アカウントをお持ちでない方は<span>こちら</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- メインアプリ -->
+<div id="main-app" style="display:none">
+  <div class="header">
+    <h1>一 日 の 軌 跡</h1>
+    <div class="date" id="header-date"></div>
+  </div>
+  <div style="background:var(--ink);">
+    <div class="user-bar">
+      <span id="user-email-display"></span>
+      <span class="sync-indicator" id="sync-indicator"></span>
+      <button class="logout-btn" onclick="doLogout()">ログアウト</button>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="showPage('today')">今日</button>
+    <button class="nav-tab" onclick="showPage('monthly')">月次</button>
+    <button class="nav-tab" onclick="showPage('daily')">日別</button>
+    <button class="nav-tab" onclick="showPage('settings')">設定</button>
+  </div>
+
+  <!-- 今日 -->
+  <div class="page active" id="page-today">
+    <div class="section-label">起床・就寝</div>
+    <div class="time-card" style="flex-direction:column;align-items:stretch;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="time-card-left">
+          <div class="time-icon morning">🌅</div>
+          <div>
+            <div class="time-label">起床時刻</div>
+            <div class="time-value empty" id="wake-display">未記録</div>
+          </div>
+        </div>
+        <div class="time-btn-group">
+          <button class="stamp-btn" id="wake-btn" onclick="stampTime('wake')">今の時刻で記録</button>
+          <button class="manual-btn" onclick="toggleManualInput('wake')">時間を入力</button>
+        </div>
+      </div>
+      <div class="time-input-row" id="wake-input-row">
+        <input class="time-input" type="time" id="wake-time-input">
+        <button class="time-input-confirm" onclick="saveManualTime('wake')">確定</button>
+        <button class="time-input-cancel" onclick="toggleManualInput('wake')">キャンセル</button>
+      </div>
+    </div>
+    <div class="time-card" style="flex-direction:column;align-items:stretch;">
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <div class="time-card-left">
+          <div class="time-icon night">🌙</div>
+          <div>
+            <div class="time-label">就寝時刻</div>
+            <div class="time-value empty" id="sleep-display">未記録</div>
+          </div>
+        </div>
+        <div class="time-btn-group">
+          <button class="stamp-btn" id="sleep-btn" onclick="stampTime('sleep')">今の時刻で記録</button>
+          <button class="manual-btn" onclick="toggleManualInput('sleep')">時間を入力</button>
+        </div>
+      </div>
+      <div class="time-input-row" id="sleep-input-row">
+        <input class="time-input" type="time" id="sleep-time-input">
+        <button class="time-input-confirm" onclick="saveManualTime('sleep')">確定</button>
+        <button class="time-input-cancel" onclick="toggleManualInput('sleep')">キャンセル</button>
+      </div>
+    </div>
+    <div class="section-label">起床30分以内のルーティン</div>
+    <div class="progress-bar-wrap"><div class="progress-bar-fill" id="routine-progress" style="width:0%"></div></div>
+    <div class="progress-label" id="routine-label">0 / 8</div>
+    <div style="height:10px"></div>
+    <div class="checklist" id="routine-list"></div>
+    <div style="background:white;border:1px solid var(--paper-ruled);border-radius:8px;margin-top:8px;">
+      <div class="add-routine-row">
+        <input class="add-routine-input" type="text" id="custom-routine-input" placeholder="その他（自由に追加）" maxlength="20">
+        <button class="add-routine-btn" onclick="addCustomRoutine()">追加</button>
+      </div>
+    </div>
+    <div class="section-label">今日の問いかけ</div>
+    <div id="today-alarms"></div>
+  </div>
+
+  <!-- 月次 -->
+  <div class="page" id="page-monthly">
+    <div class="view-tabs">
+      <button class="view-tab active" onclick="switchMonthView('wake')">起床</button>
+      <button class="view-tab" onclick="switchMonthView('routine')">ルーティン</button>
+      <button class="view-tab" onclick="switchMonthView('sleep')">就寝</button>
+      <button class="view-tab" onclick="switchMonthView('alarms')">問いかけ</button>
+    </div>
+    <div class="month-nav">
+      <button class="nav-arrow" onclick="changeMonth(-1)">←</button>
+      <div class="month-label" id="month-label"></div>
+      <button class="nav-arrow" onclick="changeMonth(1)">→</button>
+    </div>
+    <div id="month-content"></div>
+  </div>
+
+  <!-- 日別 -->
+  <div class="page" id="page-daily">
+    <div class="summary-date-nav">
+      <button class="nav-arrow" onclick="changeDailyDate(-1)">←</button>
+      <div class="summary-date-label" id="daily-date-label"></div>
+      <button class="nav-arrow" onclick="changeDailyDate(1)">→</button>
+    </div>
+    <div id="daily-content"></div>
+  </div>
+
+  <!-- 設定 -->
+  <div class="page" id="page-settings">
+    <div class="section-label">アラーム設定</div>
+    <div class="summary-block"><h3>リマインダーの有効化</h3><div id="alarm-toggle-list"></div></div>
+    <div class="section-label">サウンド</div>
+    <div class="summary-block">
+      <div class="alarm-setting-row">
+        <span>アラーム音を鳴らす</span>
+        <label class="toggle-switch"><input type="checkbox" id="sound-toggle" onchange="saveSoundSetting(this.checked)" checked><div class="toggle-slider"></div></label>
+      </div>
+    </div>
+    <div class="section-label">データ</div>
+    <div class="summary-block">
+      <div class="alarm-setting-row">
+        <span style="color:var(--warn);font-size:13px">今日のデータをリセット</span>
+        <button class="stamp-btn" onclick="resetToday()" style="font-size:11px;padding:7px 12px;background:var(--warn)">リセット</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- アラームポップアップ -->
+<div class="alarm-overlay" id="alarm-overlay">
+  <div class="alarm-popup">
+    <div class="popup-time" id="popup-time"></div>
+    <div class="popup-label">REMINDER</div>
+    <div class="popup-question" id="popup-question"></div>
+    <button class="popup-btn" onclick="closeAlarmPopup()">ノートに書いたら閉じる</button>
+  </div>
+</div>
+
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+
+<script>
+// =====================
+// Firebase設定
+// =====================
+const firebaseConfig = {
+  apiKey: "AIzaSyAhbGb8vcBWFw_ss4BEMaZ0oXNBkzQzB60",
+  authDomain: "fir-behavior-e1deb.firebaseapp.com",
+  projectId: "fir-behavior-e1deb",
+  storageBucket: "fir-behavior-e1deb.firebasestorage.app",
+  messagingSenderId: "409493961752",
+  appId: "1:409493961752:web:2cfd94a8b35a998548976d"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+// =====================
+// 定数
+// =====================
+const ROUTINES = ['日光浴','深呼吸','ストレッチ','運動','散歩','ジョギング','水を一杯飲む','ジャーナリングする','瞑想','読書','学習'];
+const ALARMS = [
+  {id:'a11',time:'11:00',q:'今していることは何を達成しようとしているのか？'},
+  {id:'a13',time:'13:00',q:'過去2時間の行動の目的は何だったか？'},
+  {id:'a16',time:'16:00',q:'この作業は最悪の未来に向かっているか、理想の未来に向かっているか？'},
+  {id:'a19',time:'19:00',q:'今日、自分したことを一覧で記入し、どんな1日だったか'},
+  {id:'a21',time:'21:00',q:'今日最も「目標達成のために生きている」と感じた瞬間は？逆に「何をしてたんだ私は」と感じたのは？'},
+];
+
+// =====================
+// ユーティリティ
+// =====================
+let currentUser = null;
+let syncTimer = null;
+let pendingData = null;
+
+function dateKey(d) {
+  d = d || new Date();
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function formatTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  return `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+function dayLabel(d) {
+  d = d || new Date();
+  return `${d.getFullYear()}年${d.getMonth()+1}月${d.getDate()}日（${'日月火水木金土'[d.getDay()]}）`;
+}
+
+// =====================
+// Firestore CRUD
+// =====================
+async function loadDayData(key) {
+  if (!currentUser) return null;
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).collection('days').doc(key).get();
+    return doc.exists ? doc.data() : null;
+  } catch(e) { return null; }
+}
+async function saveDayData(key, data) {
+  if (!currentUser) return;
+  setSyncIndicator('同期中...');
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('days').doc(key).set(data, {merge:true});
+    setSyncIndicator('✓ 同期済み');
+    setTimeout(()=>setSyncIndicator(''),3000);
+  } catch(e) { setSyncIndicator('同期エラー'); }
+}
+async function loadMonthData(year, month) {
+  if (!currentUser) return {};
+  const prefix = `${year}-${String(month).padStart(2,'0')}`;
+  try {
+    const snap = await db.collection('users').doc(currentUser.uid).collection('days')
+      .where(firebase.firestore.FieldPath.documentId(), '>=', prefix+'-01')
+      .where(firebase.firestore.FieldPath.documentId(), '<=', prefix+'-31')
+      .get();
+    const result = {};
+    snap.forEach(doc => { result[doc.id] = doc.data(); });
+    return result;
+  } catch(e) { return {}; }
+}
+function setSyncIndicator(msg) {
+  const el = document.getElementById('sync-indicator');
+  if (el) el.textContent = msg;
+}
+
+// =====================
+// 認証
+// =====================
+let isRegisterMode = false;
+function toggleLoginMode() {
+  isRegisterMode = !isRegisterMode;
+  document.getElementById('login-subtitle').textContent = isRegisterMode ? '新規アカウントを作成' : 'アカウントでサインイン';
+  document.getElementById('login-btn').style.display = isRegisterMode ? 'none' : 'block';
+  document.getElementById('register-btn').style.display = isRegisterMode ? 'block' : 'none';
+  document.getElementById('login-toggle').innerHTML = isRegisterMode
+    ? 'すでにアカウントをお持ちの方は<span>こちら</span>'
+    : 'アカウントをお持ちでない方は<span>こちら</span>';
+  document.getElementById('login-error').textContent = '';
+}
+async function doLogin() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  document.getElementById('login-error').textContent = '';
+  try {
+    await auth.signInWithEmailAndPassword(email, pass);
+  } catch(e) {
+    document.getElementById('login-error').textContent = getAuthError(e.code);
+  }
+}
+async function doRegister() {
+  const email = document.getElementById('login-email').value.trim();
+  const pass = document.getElementById('login-pass').value;
+  document.getElementById('login-error').textContent = '';
+  if (pass.length < 6) { document.getElementById('login-error').textContent = 'パスワードは6文字以上で入力してください'; return; }
+  try {
+    await auth.createUserWithEmailAndPassword(email, pass);
+  } catch(e) {
+    document.getElementById('login-error').textContent = getAuthError(e.code);
+  }
+}
+function doLogout() {
+  if (confirm('ログアウトしますか？')) auth.signOut();
+}
+function getAuthError(code) {
+  const msgs = {
+    'auth/user-not-found':'メールアドレスが見つかりません',
+    'auth/wrong-password':'パスワードが違います',
+    'auth/invalid-email':'メールアドレスの形式が正しくありません',
+    'auth/email-already-in-use':'このメールアドレスはすでに使用されています',
+    'auth/weak-password':'パスワードが短すぎます（6文字以上）',
+    'auth/invalid-credential':'メールアドレスまたはパスワードが違います',
+    'auth/too-many-requests':'しばらく時間をおいて再試行してください',
+  };
+  return msgs[code] || 'エラーが発生しました（'+code+'）';
+}
+
+auth.onAuthStateChanged(async user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('main-app').style.display = 'block';
+    document.getElementById('user-email-display').textContent = user.email;
+    document.getElementById('header-date').textContent = dayLabel();
+    await renderToday();
+    requestNotification();
+    setInterval(checkAlarms, 10000);
+    checkAlarms();
+  } else {
+    document.getElementById('login-screen').style.display = 'block';
+    document.getElementById('main-app').style.display = 'none';
+  }
+});
+
+// =====================
+// 今日ページ
+// =====================
+let todayCache = null;
+
+async function getTodayData() {
+  if (todayCache) return todayCache;
+  const data = await loadDayData(dateKey()) || {wake:'',sleep:'',routines:{},alarms:{}};
+  todayCache = data;
+  return data;
+}
+
+async function stampTime(type) {
+  const data = await getTodayData();
+  const key = type === 'wake' ? 'wake' : 'sleep';
+  if (data[key]) { if (!confirm('すでに記録済みです。上書きしますか？')) return; }
+  data[key] = new Date().toISOString();
+  todayCache = data;
+  await saveDayData(dateKey(), data);
+  renderToday();
+}
+
+function toggleManualInput(type) {
+  const row = document.getElementById(type+'-input-row');
+  row.classList.toggle('show');
+  if (row.classList.contains('show')) {
+    const now = new Date();
+    document.getElementById(type+'-time-input').value =
+      `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  }
+}
+
+async function saveManualTime(type) {
+  const val = document.getElementById(type+'-time-input').value;
+  if (!val) { alert('時間を入力してください'); return; }
+  const data = await getTodayData();
+  const key = type === 'wake' ? 'wake' : 'sleep';
+  if (data[key]) { if (!confirm('すでに記録済みです。上書きしますか？')) return; }
+  const [h, m] = val.split(':');
+  const d = new Date();
+  d.setHours(parseInt(h), parseInt(m), 0, 0);
+  data[key] = d.toISOString();
+  todayCache = data;
+  await saveDayData(dateKey(), data);
+  document.getElementById(type+'-input-row').classList.remove('show');
+  renderToday();
+}
+
+async function toggleRoutine(name) {
+  const data = await getTodayData();
+  data.routines[name] = !data.routines[name];
+  todayCache = data;
+  await saveDayData(dateKey(), data);
+  renderToday();
+}
+
+// カスタムルーティン
+async function getCustomRoutines() {
+  if (!currentUser) return [];
+  try {
+    const doc = await db.collection('users').doc(currentUser.uid).collection('settings').doc('customRoutines').get();
+    return doc.exists ? (doc.data().items || []) : [];
+  } catch(e) { return []; }
+}
+async function saveCustomRoutines(items) {
+  if (!currentUser) return;
+  await db.collection('users').doc(currentUser.uid).collection('settings').doc('customRoutines').set({items});
+}
+async function addCustomRoutine() {
+  const input = document.getElementById('custom-routine-input');
+  const name = input.value.trim();
+  if (!name) return;
+  const current = await getCustomRoutines();
+  if (current.includes(name) || ROUTINES.includes(name)) { alert('同じ名前の項目がすでにあります'); return; }
+  current.push(name);
+  await saveCustomRoutines(current);
+  input.value = '';
+  renderToday();
+}
+async function deleteCustomRoutine(name) {
+  if (!confirm(`「${name}」を削除しますか？`)) return;
+  const current = await getCustomRoutines();
+  const updated = current.filter(r => r !== name);
+  await saveCustomRoutines(updated);
+  renderToday();
+}
+
+async function toggleAlarmNote(id) {
+  const data = await getTodayData();
+  if (!data.alarms[id]) data.alarms[id] = {};
+  data.alarms[id].noted = !data.alarms[id].noted;
+  todayCache = data;
+  await saveDayData(dateKey(), data);
+  renderToday();
+}
+
+async function renderToday() {
+  const data = await getTodayData();
+  // 起床
+  if (data.wake) {
+    document.getElementById('wake-display').textContent = formatTime(data.wake);
+    document.getElementById('wake-display').classList.remove('empty');
+    document.getElementById('wake-btn').textContent = '記録済み';
+    document.getElementById('wake-btn').classList.add('stamped');
+  } else {
+    document.getElementById('wake-display').textContent = '未記録';
+    document.getElementById('wake-display').classList.add('empty');
+    document.getElementById('wake-btn').textContent = '記録する';
+    document.getElementById('wake-btn').classList.remove('stamped');
+  }
+  // 就寝
+  if (data.sleep) {
+    document.getElementById('sleep-display').textContent = formatTime(data.sleep);
+    document.getElementById('sleep-display').classList.remove('empty');
+    document.getElementById('sleep-btn').textContent = '記録済み';
+    document.getElementById('sleep-btn').classList.add('stamped');
+  } else {
+    document.getElementById('sleep-display').textContent = '未記録';
+    document.getElementById('sleep-display').classList.add('empty');
+    document.getElementById('sleep-btn').textContent = '記録する';
+    document.getElementById('sleep-btn').classList.remove('stamped');
+  }
+  // ルーティン
+  const customRoutines = await getCustomRoutines();
+  const allRoutines = [...ROUTINES, ...customRoutines];
+  const checked = allRoutines.filter(r => data.routines[r]).length;
+  document.getElementById('routine-progress').style.width = (checked/allRoutines.length*100)+'%';
+  document.getElementById('routine-label').textContent = `${checked} / ${allRoutines.length}`;
+  const rl = document.getElementById('routine-list');
+  rl.innerHTML = '';
+  ROUTINES.forEach(r => {
+    const done = !!data.routines[r];
+    const item = document.createElement('div');
+    item.className = 'check-item'+(done?' checked':'');
+    item.onclick = ()=>toggleRoutine(r);
+    item.innerHTML = `<div class="check-box">${done?'✓':''}</div><div class="check-text">${r}</div>`;
+    rl.appendChild(item);
+  });
+  customRoutines.forEach(r => {
+    const done = !!data.routines[r];
+    const item = document.createElement('div');
+    item.className = 'check-item'+(done?' checked':'');
+    item.innerHTML = `<div class="check-box" onclick="toggleRoutine('${r}');event.stopPropagation()">${done?'✓':''}</div><div class="check-text" onclick="toggleRoutine('${r}');event.stopPropagation()">${r}</div><button class="delete-btn" onclick="deleteCustomRoutine('${r}');event.stopPropagation()" title="削除">×</button>`;
+    rl.appendChild(item);
+  });
+  // 問いかけ
+  const al = document.getElementById('today-alarms');
+  al.innerHTML = '';
+  ALARMS.forEach(a => {
+    const d2 = data.alarms[a.id]||{};
+    const noted = d2.noted;
+    const card = document.createElement('div');
+    card.className = 'alarm-card';
+    card.innerHTML = `
+      <div class="alarm-header" onclick="toggleACard('ta-${a.id}')">
+        <div class="alarm-left">
+          <div class="alarm-time">${a.time}</div>
+          <div class="alarm-question">${a.q}</div>
+        </div>
+        <span class="alarm-badge ${noted?'noted':'pending'}">${noted?'記入済':'未記入'}</span>
+      </div>
+      <div class="alarm-body" id="ta-${a.id}">
+        <div class="alarm-question-full">「${a.q}」</div>
+        <div class="note-check-row ${noted?'checked':''}" onclick="toggleAlarmNote('${a.id}');event.stopPropagation()">
+          <div class="note-check-box">${noted?'✓':''}</div>
+          <div class="note-check-label">ノートに記入した</div>
+        </div>
+      </div>`;
+    al.appendChild(card);
+  });
+}
+function toggleACard(id) { document.getElementById(id).classList.toggle('open'); }
+
+// =====================
+// 月次ビュー
+// =====================
+let monthOffset = 0;
+let currentMonthView = 'wake';
+let monthDataCache = {};
+
+function switchMonthView(view) {
+  currentMonthView = view;
+  document.querySelectorAll('.view-tab').forEach((t,i) => {
+    t.classList.toggle('active', ['wake','routine','sleep','alarms'][i] === view);
+  });
+  renderMonthContent();
+}
+
+function changeMonth(dir) {
+  monthOffset += dir;
+  const now = new Date();
+  now.setMonth(now.getMonth() + monthOffset);
+  if (now > new Date()) { monthOffset -= dir; return; }
+  monthDataCache = {};
+  renderMonthContent();
+}
+
+async function renderMonthContent() {
+  const now = new Date();
+  now.setMonth(now.getMonth() + monthOffset);
+  const year = now.getFullYear();
+  const month = now.getMonth()+1;
+  document.getElementById('month-label').textContent = `${year}年${month}月`;
+
+  if (!monthDataCache[`${year}-${month}`]) {
+    document.getElementById('month-content').innerHTML = '<div style="text-align:center;padding:30px;color:var(--ink-faint);font-size:13px">読み込み中...</div>';
+    monthDataCache[`${year}-${month}`] = await loadMonthData(year, month);
+  }
+  const allData = monthDataCache[`${year}-${month}`];
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const content = document.getElementById('month-content');
+
+  if (currentMonthView === 'wake') {
+    let rows = '';
+    for (let d=1; d<=daysInMonth; d++) {
+      const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const data = allData[key];
+      const dow = '日月火水木金土'[new Date(year,month-1,d).getDay()];
+      rows += `<tr>
+        <td>${month}/${d}（${dow}）</td>
+        <td>${data&&data.wake ? formatTime(data.wake) : '—'}</td>
+      </tr>`;
+    }
+    content.innerHTML = `<div class="month-section">
+      <div class="month-section-header">起床時間</div>
+      <table class="month-table"><thead><tr><th style="text-align:left">日付</th><th>起床</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  else if (currentMonthView === 'sleep') {
+    let rows = '';
+    for (let d=1; d<=daysInMonth; d++) {
+      const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const data = allData[key];
+      const dow = '日月火水木金土'[new Date(year,month-1,d).getDay()];
+      rows += `<tr>
+        <td>${month}/${d}（${dow}）</td>
+        <td>${data&&data.sleep ? formatTime(data.sleep) : '—'}</td>
+      </tr>`;
+    }
+    content.innerHTML = `<div class="month-section">
+      <div class="month-section-header">就寝時間</div>
+      <table class="month-table"><thead><tr><th style="text-align:left">日付</th><th>就寝</th></tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  else if (currentMonthView === 'routine') {
+    const customRoutines = await getCustomRoutines();
+    const allRoutines = [...ROUTINES, ...customRoutines];
+    let header = '<th style="text-align:left">日付</th>' + allRoutines.map(r=>`<th style="font-size:10px;writing-mode:vertical-rl">${r}</th>`).join('');
+    let rows = '';
+    for (let d=1; d<=daysInMonth; d++) {
+      const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+      const data = allData[key];
+      const dow = '日月火水木金土'[new Date(year,month-1,d).getDay()];
+      const cells = allRoutines.map(r => {
+        const done = data && data.routines && data.routines[r];
+        return `<td><span class="${done?'dot-done':'dot-skip'}"></span></td>`;
+      }).join('');
+      rows += `<tr><td>${month}/${d}（${dow}）</td>${cells}</tr>`;
+    }
+    content.innerHTML = `<div class="month-section" style="overflow-x:auto">
+      <div class="month-section-header">朝のルーティン</div>
+      <table class="month-table"><thead><tr>${header}</tr></thead><tbody>${rows}</tbody></table>
+    </div>`;
+  }
+  else if (currentMonthView === 'alarms') {
+    let html = '';
+    ALARMS.forEach(a => {
+      let rows = '';
+      for (let d=1; d<=daysInMonth; d++) {
+        const key = `${year}-${String(month).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+        const data = allData[key];
+        const dow = '日月火水木金土'[new Date(year,month-1,d).getDay()];
+        const noted = data && data.alarms && data.alarms[a.id] && data.alarms[a.id].noted;
+        rows += `<tr>
+          <td>${month}/${d}（${dow}）</td>
+          <td>${noted ? '<span class="pill noted" style="margin:0">記入済</span>' : '<span style="color:var(--ink-faint);font-size:11px">—</span>'}</td>
+        </tr>`;
+      }
+      html += `<div class="month-section">
+        <div class="month-section-header">${a.time}　${a.q}</div>
+        <table class="month-table"><thead><tr><th style="text-align:left">日付</th><th>記録</th></tr></thead><tbody>${rows}</tbody></table>
+      </div>`;
+    });
+    content.innerHTML = html;
+  }
+}
+
+// =====================
+// 日別ビュー
+// =====================
+let dailyOffset = 0;
+async function changeDailyDate(dir) {
+  dailyOffset += dir;
+  if (dailyOffset > 0) dailyOffset = 0;
+  renderDailyContent();
+}
+async function renderDailyContent() {
+  const d = new Date(); d.setDate(d.getDate()+dailyOffset);
+  const key = dateKey(d);
+  document.getElementById('daily-date-label').textContent = dayLabel(d);
+  const data = await loadDayData(key) || {wake:'',sleep:'',routines:{},alarms:{}};
+  const customRoutines = await getCustomRoutines();
+  const allRoutines = [...ROUTINES, ...customRoutines];
+  const doneRoutines = allRoutines.filter(r=>data.routines&&data.routines[r]);
+  const skipRoutines = allRoutines.filter(r=>!(data.routines&&data.routines[r]));
+  let html = `<div class="summary-block">
+    <h3>起床 ・ 就寝</h3>
+    <div class="summary-row"><span class="summary-row-label">起床</span><span class="summary-row-val">${data.wake?formatTime(data.wake):'—'}</span></div>
+    <div class="summary-row"><span class="summary-row-label">就寝</span><span class="summary-row-val">${data.sleep?formatTime(data.sleep):'—'}</span></div>
+  </div>
+  <div class="summary-block">
+    <h3>朝のルーティン　${doneRoutines.length} / ${allRoutines.length}</h3>
+    <div style="margin-top:4px">`;
+  doneRoutines.forEach(r=>{html+=`<span class="pill done">✓ ${r}</span>`;});
+  skipRoutines.forEach(r=>{html+=`<span class="pill skip">${r}</span>`;});
+  html += `</div></div><div class="summary-block"><h3>問いかけの記録</h3>`;
+  ALARMS.forEach(a=>{
+    const d2=(data.alarms||{})[a.id]||{};
+    html+=`<div class="summary-row">
+      <span class="summary-row-label">${a.time}　<span style="font-size:11px">${a.q.substring(0,16)}…</span></span>
+      <span class="pill ${d2.noted?'noted':'skipped'}">${d2.noted?'記入済':'未記入'}</span>
+    </div>`;
+  });
+  html+=`</div>`;
+  document.getElementById('daily-content').innerHTML = html;
+}
+
+// =====================
+// ページ切替
+// =====================
+function showPage(name) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  const tabs=['today','monthly','daily','settings'];
+  document.querySelectorAll('.nav-tab')[tabs.indexOf(name)].classList.add('active');
+  if (name==='monthly') { monthDataCache={}; renderMonthContent(); }
+  if (name==='daily') renderDailyContent();
+  if (name==='settings') renderSettings();
+}
+
+// =====================
+// アラーム
+// =====================
+let lastFiredAlarm = {};
+function checkAlarms() {
+  const now = new Date();
+  const hhmm = `${String(now.getHours()).padStart(2,'0')}:${String(now.getMinutes()).padStart(2,'0')}`;
+  const key = dateKey();
+  if (!lastFiredAlarm[key]) lastFiredAlarm[key]=[];
+  ALARMS.forEach(a=>{
+    if (a.time===hhmm && !lastFiredAlarm[key].includes(a.id)) {
+      lastFiredAlarm[key].push(a.id);
+      fireAlarm(a);
+    }
+  });
+}
+function fireAlarm(a) {
+  document.getElementById('popup-time').textContent = a.time;
+  document.getElementById('popup-question').textContent = a.q;
+  document.getElementById('alarm-overlay').classList.add('show');
+  const soundOn = localStorage.getItem('sound-on') !== 'false';
+  if (soundOn) playAlarmSound();
+  if (Notification.permission==='granted') new Notification('一日の軌跡',{body:a.q});
+}
+function closeAlarmPopup() {
+  document.getElementById('alarm-overlay').classList.remove('show');
+  todayCache = null;
+  renderToday();
+}
+function playAlarmSound() {
+  try {
+    const ctx = new (window.AudioContext||window.webkitAudioContext)();
+    [0,0.4,0.8].forEach(offset=>{
+      const osc=ctx.createOscillator(), gain=ctx.createGain();
+      osc.connect(gain); gain.connect(ctx.destination);
+      osc.frequency.value=660; osc.type='sine';
+      gain.gain.setValueAtTime(0,ctx.currentTime+offset);
+      gain.gain.linearRampToValueAtTime(0.3,ctx.currentTime+offset+0.05);
+      gain.gain.linearRampToValueAtTime(0,ctx.currentTime+offset+0.4);
+      osc.start(ctx.currentTime+offset); osc.stop(ctx.currentTime+offset+0.5);
+    });
+  } catch(e){}
+}
+function requestNotification() {
+  if ('Notification' in window && Notification.permission==='default') Notification.requestPermission();
+}
+
+// =====================
+// 設定
+// =====================
+function renderSettings() {
+  const soundOn = localStorage.getItem('sound-on') !== 'false';
+  document.getElementById('sound-toggle').checked = soundOn;
+}
+function saveSoundSetting(val) { localStorage.setItem('sound-on', val); }
+async function resetToday() {
+  if (!confirm('今日のデータをすべて削除します。よろしいですか？')) return;
+  try {
+    await db.collection('users').doc(currentUser.uid).collection('days').doc(dateKey()).delete();
+    todayCache = null;
+    renderToday();
+    alert('リセットしました。');
+  } catch(e) { alert('エラーが発生しました'); }
+}
+</script>
+</body>
+</html>
